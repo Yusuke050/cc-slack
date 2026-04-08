@@ -1,13 +1,13 @@
 import asyncio
 import logging
 
-from slack_bolt import App
-from slack_bolt.adapter.socket_mode import SocketModeHandler
+from slack_bolt.async_app import AsyncApp
+from slack_bolt.adapter.socket_mode.async_handler import AsyncSocketModeHandler
 
 from claude_session import ClaudeSession
 from config import SLACK_APP_TOKEN, SLACK_BOT_TOKEN
 from handlers import register_handlers
-from scheduler import start_scheduler
+# from scheduler import start_scheduler
 
 logging.basicConfig(
     level=logging.INFO,
@@ -16,26 +16,25 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def main():
-    app = App(token=SLACK_BOT_TOKEN)
+async def main():
+    app = AsyncApp(token=SLACK_BOT_TOKEN)
 
     session = ClaudeSession()
-    asyncio.get_event_loop().run_until_complete(session.connect())
+    await session.connect()
     logger.info("Claude session ready")
 
     register_handlers(app, session)
-    start_scheduler(session, app.client)
 
     logger.info("Starting Slack bot (Socket Mode)...")
-    handler = SocketModeHandler(app, SLACK_APP_TOKEN)
+    handler = AsyncSocketModeHandler(app, SLACK_APP_TOKEN)
 
     try:
-        handler.start()
+        await handler.start_async()
     except KeyboardInterrupt:
         logger.info("Shutting down...")
     finally:
-        asyncio.get_event_loop().run_until_complete(session.disconnect())
+        await session.disconnect()
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

@@ -8,6 +8,8 @@ from claude_code_sdk import (
     ResultMessage,
     TextBlock,
 )
+from claude_code_sdk._internal.message_parser import parse_message
+from claude_code_sdk._errors import MessageParseError
 
 from config import CLAUDE_CWD, CLAUDE_PERMISSION_MODE
 
@@ -50,7 +52,13 @@ class ClaudeSession:
             await self._client.query(prompt)
 
             texts: list[str] = []
-            async for msg in self._client.receive_response():
+            async for data in self._client._query.receive_messages():
+                try:
+                    msg = parse_message(data)
+                except MessageParseError:
+                    logger.debug("Skipping unknown message: %s", data.get("type"))
+                    continue
+
                 if isinstance(msg, AssistantMessage):
                     for block in msg.content:
                         if isinstance(block, TextBlock):
@@ -58,6 +66,7 @@ class ClaudeSession:
                 elif isinstance(msg, ResultMessage):
                     if msg.is_error:
                         return f"Error: {msg.result or 'unknown error'}"
+                    break
 
             return "\n".join(texts) if texts else "(no response)"
 
