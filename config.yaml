@@ -1,0 +1,9 @@
+claude:
+  cwd: /Users/yusuke/code
+  permission_mode: bypassPermissions
+
+schedules: []
+  # - name: morning_summary
+  #   cron: "0 7 * * 1-5"
+  #   channel: "#dev"
+  #   prompt: "昨日マージされたPRをまとめて"
