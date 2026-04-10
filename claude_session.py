@@ -34,16 +34,22 @@ class ClaudeSession:
         self._session_id: str | None = None
 
     def _load_session_id(self) -> str | None:
-        if SESSION_ID_FILE.exists():
-            sid = SESSION_ID_FILE.read_text().strip()
-            if sid:
-                logger.info("Loaded saved session_id: %s", sid)
-                return sid
+        try:
+            if SESSION_ID_FILE.exists():
+                sid = SESSION_ID_FILE.read_text().strip()
+                if sid:
+                    logger.info("Loaded saved session_id: %s", sid)
+                    return sid
+        except OSError:
+            logger.warning("Failed to load session_id", exc_info=True)
         return None
 
     def _save_session_id(self, sid: str) -> None:
-        SESSION_ID_FILE.write_text(sid)
-        logger.info("Saved session_id: %s", sid)
+        try:
+            SESSION_ID_FILE.write_text(sid)
+            logger.info("Saved session_id: %s", sid)
+        except OSError:
+            logger.warning("Failed to save session_id", exc_info=True)
 
     async def connect(self) -> None:
         saved_id = self._load_session_id()

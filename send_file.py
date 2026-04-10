@@ -13,16 +13,17 @@ import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
-from slack_sdk import WebClient
-from slack_sdk.errors import SlackApiError
 
 load_dotenv(Path(__file__).parent / ".env")
 
 
 def send_file(file_path: str, channel: str, message: str = "") -> None:
+    from slack_sdk import WebClient
+    from slack_sdk.errors import SlackApiError
+
     token = os.getenv("SLACK_BOT_TOKEN")
     if not token:
-        print("Error: 環境変数 SLACK_BOT_TOKEN が設定されていません")
+        print("Error: SLACK_BOT_TOKEN が設定されていません")
         sys.exit(1)
 
     client = WebClient(token=token)
@@ -45,10 +46,7 @@ def send_file(file_path: str, channel: str, message: str = "") -> None:
             print(f"送信失敗: {resp['error']}")
             sys.exit(1)
     except SlackApiError as e:
-        print(f"Error: Slack API エラー - {e.response['error']}")
-        sys.exit(1)
-    except Exception as e:
-        print(f"Error: ファイル送信に失敗しました - {e}")
+        print(f"送信失敗: {e.response['error']}")
         sys.exit(1)
 
 
