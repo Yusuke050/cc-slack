@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from pathlib import Path
 
 from claude_code_sdk import (
     AssistantMessage,
@@ -15,27 +16,48 @@ from config import CLAUDE_CWD, CLAUDE_PERMISSION_MODE
 
 logger = logging.getLogger(__name__)
 
+SESSION_ID_FILE = Path(__file__).parent / ".session_id"
+
 
 class ClaudeSession:
     """ClaudeSDKClient の常駐セッションを管理する。
 
     connect() でセッションを開始し、send() でプロンプトを送信する。
     コンテキストはセッションが生きている間蓄積される。
+    前回のセッションIDが保存されていれば、自動的に復元する。
     """
 
     def __init__(self, cwd: str | None = None):
         self._cwd = cwd or CLAUDE_CWD
         self._client: ClaudeSDKClient | None = None
         self._lock = asyncio.Lock()
+        self._session_id: str | None = None
+
+    def _load_session_id(self) -> str | None:
+        if SESSION_ID_FILE.exists():
+            sid = SESSION_ID_FILE.read_text().strip()
+            if sid:
+                logger.info("Loaded saved session_id: %s", sid)
+                return sid
+        return None
+
+    def _save_session_id(self, sid: str) -> None:
+        SESSION_ID_FILE.write_text(sid)
+        logger.info("Saved session_id: %s", sid)
 
     async def connect(self) -> None:
+        saved_id = self._load_session_id()
         options = ClaudeCodeOptions(
             permission_mode=CLAUDE_PERMISSION_MODE,
             cwd=self._cwd,
+            resume=saved_id,
         )
         self._client = ClaudeSDKClient(options)
         await self._client.connect()
-        logger.info("Claude session connected (cwd=%s)", self._cwd)
+        if saved_id:
+            logger.info("Claude session resumed (id=%s, cwd=%s)", saved_id, self._cwd)
+        else:
+            logger.info("Claude session connected (new, cwd=%s)", self._cwd)
 
     async def disconnect(self) -> None:
         if self._client:
@@ -64,6 +86,9 @@ class ClaudeSession:
                         if isinstance(block, TextBlock):
                             texts.append(block.text)
                 elif isinstance(msg, ResultMessage):
+                    if msg.session_id:
+                        self._session_id = msg.session_id
+                        self._save_session_id(msg.session_id)
                     if msg.is_error:
                         return f"Error: {msg.result or 'unknown error'}"
                     break
