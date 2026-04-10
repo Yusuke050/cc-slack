@@ -1,5 +1,5 @@
 claude:
-  cwd: /Users/yusuke/code
+  cwd: /home/yusuke/cc
   permission_mode: bypassPermissions
 
 schedules: []
