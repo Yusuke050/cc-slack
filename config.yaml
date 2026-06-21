@@ -1,6 +1,7 @@
 claude:
   cwd: /home/yusuke/cc
   permission_mode: bypassPermissions
+  # model: claude-opus-4-8  # 未指定ならSDKのデフォルトモデルを使う
 
 schedules: []
   # - name: morning_summary

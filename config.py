@@ -22,4 +22,5 @@ CONFIG = load_config()
 
 CLAUDE_CWD = CONFIG.get("claude", {}).get("cwd", str(Path.home()))
 CLAUDE_PERMISSION_MODE = CONFIG.get("claude", {}).get("permission_mode", "bypassPermissions")
+CLAUDE_MODEL = CONFIG.get("claude", {}).get("model")  # None ならSDKのデフォルトモデル
 SCHEDULES = CONFIG.get("schedules", [])

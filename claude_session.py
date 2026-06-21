@@ -10,7 +10,7 @@ from claude_agent_sdk import (
     query,
 )
 
-from config import CLAUDE_CWD, CLAUDE_PERMISSION_MODE
+from config import CLAUDE_CWD, CLAUDE_MODEL, CLAUDE_PERMISSION_MODE
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +86,7 @@ class ClaudeSession:
             resume=saved_id,
             mcp_servers=mcp,
             allowed_tools=allowed,
+            model=CLAUDE_MODEL,  # None ならSDKのデフォルトモデル
         )
         return opts
 
